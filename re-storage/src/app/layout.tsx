@@ -1,9 +1,8 @@
 import localFont from "next/font/local";
 import "./globals.css";
 import * as React from 'react';
-import { Box, Container,CssBaseline } from "@mui/material";
+import { Box, Container,CssBaseline, Paper } from "@mui/material";
 import Menu from './components/menu';
-import DynamicBreadcrumbs from "./components/breadcrumb";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -24,17 +23,20 @@ export default function RootLayout({
   return (    
     <html lang="pt-br">
       <body
+        style={{ backgroundColor: "#f0f0f0" }}
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <CssBaseline enableColorScheme />
         <Menu/>
         <Container
-          maxWidth="lg"
+          maxWidth={false}
           component="main"
-          sx={{ display: 'flex', flexDirection: 'column', my: 16, gap: 4 }}
+          sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', my: 16, gap: 4 }}
         >
-          <Box sx={{ width: '100%', maxWidth: { sm: '100%', md: '1700px' } }}>
-            {children}
+          <Box sx={{ width: '100%', maxWidth: { sm: '100%', md: '2200px' } }}>
+            <Paper sx={{ padding: '100px' }}>
+              {children}
+            </Paper>
           </Box>
         </Container>
       </body>

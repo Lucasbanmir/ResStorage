@@ -12,16 +12,12 @@ import { enqueueSnackbar } from "notistack";
 interface MyDialogProps {
   open: boolean;
   onClose: () => void;
-  onSubmit: (value: number, row: Object) => void; // Função para enviar o valor ao componente pai
-  row: {
-    id: string,
-    local: string
-    uso: number,
-  };
+  onSubmit: (value: number) => void; // Função para enviar o valor ao componente pai
+  usage: number;
 }
 
-export default function EditStorage({ open, onClose, row, onSubmit }: MyDialogProps) {
-  const [value, setValue] = useState<string>(row.uso.toString()); // Estado inicial como string para aceitar vazio
+export default function EditStorage({ open, onClose, usage, onSubmit }: MyDialogProps) {
+  const [value, setValue] = useState<string>(usage.toString()); // Estado inicial definido como string para o campo aceitar vazio
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const inputValue = e.target.value;
@@ -46,8 +42,15 @@ export default function EditStorage({ open, onClose, row, onSubmit }: MyDialogPr
       return;
     }
 
+    // Por conter no documento que as estações devem ter pedidos de coletas para reduzir o valor de uso da estação,
+    // optei por aceitar apenas números maiores que o anterior para que a retirada de resíduos fiquem apenas por solicitações.
+    if (numericValue < usage) {
+      enqueueSnackbar(`O valor deve ser maior que ${usage}`, { variant: 'error' });
+      return;
+    }
+
     enqueueSnackbar('Valor salvo com sucesso!', { variant: 'success' });
-    onSubmit(numericValue, row);
+    onSubmit(numericValue);
     onClose();
   };
 
