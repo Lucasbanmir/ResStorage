@@ -129,7 +129,7 @@ export default function Home() {
             </Stack>
           ))}
         </Stack>
-        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
           <Typography variant='h5' sx={{ fontWeight: 'medium' }}>
             Conheça a parte de gestão do ResStorage clicando aqui em baixo. Espero que goste da experiência!
           </Typography>
