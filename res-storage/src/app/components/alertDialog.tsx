@@ -1,14 +1,14 @@
 import * as React from 'react';
 import { Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle } from '@mui/material/';
 
-interface MyDialogProps {
+interface AlertDialogProps {
   open: boolean;
   onClose: () => void;
   onSubmit: () => void; // Função para enviar a confirmação ao componente pai
   text: string;
-}
+};
 
-export default function AlertDialog({ open, onClose, text, onSubmit }: MyDialogProps) {
+export default function AlertDialog({ open, onClose, text, onSubmit }: AlertDialogProps) {
   return (
     <React.Fragment>
       <Dialog

@@ -3,7 +3,8 @@ import "./globals.css";
 import * as React from 'react';
 import { Box, Container,CssBaseline, Paper } from "@mui/material";
 import Menu from './components/menu';
-import ReactQueryProvider from "./utils/providers/ReactQueryProvider";
+import ReactQueryProvider from "./utils/providers/reactQueryProvider";
+import NotistackSnackbarProvider from "./utils/providers/notistackSnackbarProvider";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -28,19 +29,21 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <ReactQueryProvider>
-          <CssBaseline enableColorScheme />
-          <Menu/>
-          <Container
-            maxWidth={false}
-            component="main"
-            sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', my: 4, gap: 4 }}
-          >
-            <Box sx={{ width: '100%', maxWidth: { sm: '100%', md: '2200px' } }}>
-              <Paper sx={{ padding: '5%' }}>
-                {children}
-              </Paper>
-            </Box>
-          </Container>
+          <NotistackSnackbarProvider>
+            <CssBaseline enableColorScheme />
+            <Menu/>
+            <Container
+              maxWidth={false}
+              component="main"
+              sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', my: 4, gap: 4 }}
+            >
+              <Box sx={{ width: '100%', maxWidth: { sm: '100%', md: '2200px' } }}>
+                <Paper sx={{ padding: '5%' }}>
+                  {children}
+                </Paper>
+              </Box>
+            </Container>
+          </NotistackSnackbarProvider>
         </ReactQueryProvider>
       </body>
     </html>

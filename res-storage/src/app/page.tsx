@@ -3,10 +3,7 @@ import * as React from 'react';
 import { Box, Stack, Typography, Divider, ButtonBase } from '@mui/material';
 import { useRouter } from 'next/navigation';
 import { styled } from '@mui/material/styles';
-import AutoFixHighRoundedIcon from '@mui/icons-material/AutoFixHighRounded';
-import AccessibilityIcon from '@mui/icons-material/Accessibility';
-import EmojiObjectsIcon from '@mui/icons-material/EmojiObjects';
-import ThumbUpAltRoundedIcon from '@mui/icons-material/ThumbUpAltRounded';
+import { AutoFixHighRounded, Accessibility, EmojiObjects, ThumbUpAltRounded } from '@mui/icons-material';
 
 const image = {
   url: '/recipes.jpg',
@@ -80,25 +77,25 @@ const ImageMarked = styled('span')(({ theme }) => ({
 
 const items = [
   {
-    icon: <EmojiObjectsIcon sx={{ color: 'text.secondary' }} />,
+    icon: <EmojiObjects sx={{ color: 'text.secondary' }} />,
     title: 'Objetivo',
     description:
       "O ResStorage é um projeto forjado com o intuito de realizar gestões de estações de armazenamento de uma forma intuitiva e prática.",
   },
   {
-    icon: <AccessibilityIcon sx={{ color: 'text.secondary' }} />,
+    icon: <Accessibility sx={{ color: 'text.secondary' }} />,
     title: 'Adaptável',
     description:
       "O projeto foi construído pensando na acessibilidade, então ele contém uma responsividade completa. Permitindo liberdade de uso para o usuário.",
   },
   {
-    icon: <ThumbUpAltRoundedIcon sx={{ color: 'text.secondary' }} />,
+    icon: <ThumbUpAltRounded sx={{ color: 'text.secondary' }} />,
     title: 'Boa experiência do usuário',
     description:
       "Sou um profissional que atua também como UX/UI, logo a experiência do usuário é levada totalmente em conta. O projeto foi idealizado com uma interface intuitiva e fácil.",
   },
   {
-    icon: <AutoFixHighRoundedIcon sx={{ color: 'text.secondary' }} />,
+    icon: <AutoFixHighRounded sx={{ color: 'text.secondary' }} />,
     title: 'Construção inteligente',
     description:
       "Pensando na fluidez e agilizade para o cliente, o ResStorage foi construído usando o Next.js 15, utilizando todos os benefícios que esse framework é capaz de trazer para otimizar o sistema com o SSR.",
