@@ -1,22 +1,17 @@
 "use client";
 import * as React from 'react';
 import { useState } from 'react';
-import Button from '@mui/material/Button';
-import TextField from '@mui/material/TextField';
-import Dialog from '@mui/material/Dialog';
-import DialogActions from '@mui/material/DialogActions';
-import DialogContent from '@mui/material/DialogContent';
-import DialogTitle from '@mui/material/DialogTitle';
+import { Button, TextField, Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material';
 import { enqueueSnackbar } from "notistack";
 
-interface MyDialogProps {
+interface EditDialogProps {
   open: boolean;
   onClose: () => void;
   onSubmit: (value: number) => void; // Função para enviar o valor ao componente pai
   usage: number;
-}
+};
 
-export default function EditStorage({ open, onClose, usage, onSubmit }: MyDialogProps) {
+export default function EditStorage({ open, onClose, usage, onSubmit }: EditDialogProps) {
   const [value, setValue] = useState<string>(usage.toString()); // Estado inicial definido como string para o campo aceitar vazio
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {

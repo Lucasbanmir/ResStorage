@@ -1,45 +1,56 @@
 "use client";
 import * as React from 'react';
-import { useState } from 'react';
-import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, IconButton, Typography, Chip, Stack, Tooltip } from '@mui/material';
+import { useState, useEffect } from 'react';
+import { useQuery } from "@tanstack/react-query";
+import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, IconButton, Typography, Chip, Stack, Tooltip, CircularProgress } from '@mui/material';
 import { Edit, Inventory, LocalShipping } from '@mui/icons-material';
 import Dialog from './editStorage';
 import AlertDialog from '../components/alertDialog';
-import { SnackbarProvider, enqueueSnackbar } from 'notistack';
+import { enqueueSnackbar } from 'notistack';
+import axios from 'axios';
 
-function createData(
+interface storage {
   id: string,
   local: string,
   usage: number,
   status: string | null,
-) {
-  return { id, local, usage, status };
-}
+};
 
-// Mockando os dados
-const initialRows = [
-  createData('1', 'Al. Vicente Pinzon, 54, 3º andar 04547-130 - São Paulo/SP', 0, 'Vazio'),
-  createData('2', 'Av. Paulista, 2300 Andar Pilotis 01310-300 - São Paulo/SP', 0, 'Vazio'),
-  createData('3', 'R. Dr. Celestino, 122 - 611 24020-091 - Niterói/RJ', 0, 'Vazio'),
-  createData('4', 'Teresina/PI', 0, 'Vazio'),
-];
-
-export default function BasicTable() {
-  const [rows, setRows] = useState(initialRows);
+function useDialog(createRequest: (id: string) => void, setData: (id: string, attribute: string, value: any) => void) {
   const [open, setOpen] = useState(false);
-  const [openAlert, setOpenAlert] = useState(false);
-  const [confirmId, setConfirmId] = useState<string | null>(null); // Linha em que está sendo confirmada a coleta
-  const [editingRow, setEditingRow] = useState<typeof rows[0] | null>(null); // Linha que está sendo editada
+  const [editingRow, setEditingRow] = useState<storage | null>(null); // Linha que está sendo editada
 
-  const handleOpen = (row: typeof rows[0]) => {
+  const handleOpen = (row: storage) => {
     setEditingRow(row);
     setOpen(true);
   };
-
+  
   const handleClose = () => {
     setOpen(false);
     setEditingRow(null);
   };
+
+  // Função para lidar com a submissão do Dialog e atualizar as informações da linha
+  const handleDialogSubmit = (value: number) => {
+    if (!editingRow) return;
+  
+    const status = value >= 80 
+      ? (createRequest(editingRow.id), null) 
+      : value > 0 && value < 80
+        ? 'Em uso'
+        : 'Vazio';
+  
+    setData(editingRow.id, 'usage', Math.max(0, value));
+    if (value < 80) setData(editingRow.id, 'status', status);
+    handleClose();
+  };
+
+  return { open, editingRow, handleOpen, handleClose, handleDialogSubmit };
+}
+
+function useAlertDialog(setData: (id: string, attribute: string, value: any) => void) {
+  const [openAlert, setOpenAlert] = useState(false);
+  const [confirmId, setConfirmId] = useState<string>(''); // Linha em que está sendo confirmada a coleta
 
   const handleOpenAlert = (id: string) => {
     setConfirmId(id);
@@ -47,62 +58,73 @@ export default function BasicTable() {
   };
 
   const handleCloseAlert = () => {
-    setConfirmId(null);
+    setConfirmId('');
     setOpenAlert(false);
   };
 
   // Função para tratar o aceite de uma solicitação de coleta
-  const handleConfirm = (id: string | null) => {
-    let status = 'Vazio', value = 0;
-    enqueueSnackbar('Coleta aceita!', { variant: 'success' });
-
-    setRows((prevRows) =>
-      prevRows.map((row) =>
-        row.id === id ? { ...row, usage: value, status: status } : row
-      )
-    );
+  const handleConfirm = (id: string) => {
     handleCloseAlert();
+    setData(id, 'usage', 0);
+    setData(id, 'status', 'Vazio');
+    enqueueSnackbar('Coleta aceita!', { variant: 'success' });
   };
 
-  const handleRequest = (id: string) => {
-    let status = 'Aguardando coleta';
-    setRows((prevRows) =>
-      prevRows.map((row) =>
-        row.id === id ? { ...row, status: status } : row
-      )
-    );
-    enqueueSnackbar('Pedido de coleta criado!', { variant: 'success' });
-  }
+  return { openAlert, confirmId, handleOpenAlert, handleCloseAlert, handleConfirm };
+}
 
-  // Função para lidar com a submissão do Dialog e atualizar as informações da linha
-  const handleDialogSubmit = (value: number) => {
-    if (editingRow) {
-      let status = null;
-      if (value >= 80) {
-        handleRequest(editingRow.id)
-      } else if (value > 0 && value < 80) {
-        status = 'Em uso';
-      } else if (value <= 0) {
-        status = 'Vazio';
-        value = 0;
-      }      
+export default function BasicTable() {
+  const [rows, setRows] = useState<storage[]>([]);
 
-      setRows((prevRows) =>
-        prevRows.map((row) =>
-          row.id === editingRow.id ? { ...row, usage: value, ...(value < 80 && { status: status }) } : row
-        )
-      );
+  const { open, editingRow, handleOpen, handleClose, handleDialogSubmit } = useDialog(createRequest, setData);
+  
+  const { openAlert, confirmId, handleOpenAlert, handleCloseAlert, handleConfirm } = useAlertDialog(setData);
+
+  const { data, isLoading, isError } = useQuery({
+    queryFn: async () => await axios.get('/api/storage'),
+    queryKey: ["rows"],
+  });
+
+  // Sincronizar os dados do React Query com o estado local para permitir manipulações
+  useEffect(() => {
+    if (data?.data && rows.length === 0) {
+      setRows(data.data);
     }
-    handleClose();
+  }, [data]);
+
+  function setData(id: string, attribute: string, value: any ) {
+    setRows((prevRows) => (prevRows || []).map((row) =>
+      row.id === id ? { ...row, [attribute]: value } : row
+    ));
   };
+
+  function createRequest(id: string) {
+    setData(id, 'status', 'Aguardando coleta');
+    enqueueSnackbar('Pedido de coleta criado!', { variant: 'success' });
+  };
+
+  if (isLoading)
+    return (
+      <Stack alignItems="center" justifyContent="center" height="200px">
+        <CircularProgress />
+      </Stack>
+    );
 
   return (
-    <React.Fragment>
-      <SnackbarProvider maxSnack={2}>
-        <Stack spacing={3}>  
-          <Typography variant="h4" component="div">
-            Gestão de armazenamento
-          </Typography>
+    <Stack spacing={3}>  
+      <Typography variant="h4" component="div">
+        Gestão de armazenamento
+      </Typography>
+      {isError ? (
+        <Typography variant="subtitle1" color="error">
+          Ocorreu um erro ao carregar os dados.
+        </Typography>
+      ) : rows.length === 0 ? (
+        <Typography variant="subtitle1">
+          Nenhum resultado encontrado.
+        </Typography>
+      ) : (
+        <React.Fragment>
           <TableContainer component={Paper}>
             <Table sx={{ minWidth: 650 }} aria-label="simple table">
               <TableHead>
@@ -115,7 +137,7 @@ export default function BasicTable() {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {rows.map((row) => (
+                {rows.map((row: storage) => (
                   <TableRow
                     key={row.id}
                     sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
@@ -160,7 +182,7 @@ export default function BasicTable() {
                               disabled={row.status ===  "Aguardando coleta" || row.usage <= 0}
                               color="primary"
                               aria-label="Solicitar coleta"
-                              onClick={() => handleRequest(row.id)} // Solicitação de coleta manualmente
+                              onClick={() => createRequest(row.id)} // Solicitação de coleta manualmente
                             >
                               <LocalShipping fontSize="small" />
                             </IconButton>
@@ -187,8 +209,8 @@ export default function BasicTable() {
             text="Você está prestes a confirmar a coleta desta estação. Essa ação não pode ser desfeita."
             onSubmit={() => handleConfirm(confirmId)}
           />
-        </Stack>
-      </SnackbarProvider>
-    </React.Fragment>
+        </React.Fragment>
+    )}
+    </Stack>
   );
 }
