@@ -3,6 +3,7 @@ import "./globals.css";
 import * as React from 'react';
 import { Box, Container,CssBaseline, Paper } from "@mui/material";
 import Menu from './components/menu';
+import ReactQueryProvider from "./utils/providers/ReactQueryProvider";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -26,19 +27,21 @@ export default function RootLayout({
         style={{ backgroundColor: "#f0f0f0" }}
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <CssBaseline enableColorScheme />
-        <Menu/>
-        <Container
-          maxWidth={false}
-          component="main"
-          sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', my: 16, gap: 4 }}
-        >
-          <Box sx={{ width: '100%', maxWidth: { sm: '100%', md: '2200px' } }}>
-            <Paper sx={{ padding: '100px' }}>
-              {children}
-            </Paper>
-          </Box>
-        </Container>
+        <ReactQueryProvider>
+          <CssBaseline enableColorScheme />
+          <Menu/>
+          <Container
+            maxWidth={false}
+            component="main"
+            sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', my: 4, gap: 4 }}
+          >
+            <Box sx={{ width: '100%', maxWidth: { sm: '100%', md: '2200px' } }}>
+              <Paper sx={{ padding: '5%' }}>
+                {children}
+              </Paper>
+            </Box>
+          </Container>
+        </ReactQueryProvider>
       </body>
     </html>
   );

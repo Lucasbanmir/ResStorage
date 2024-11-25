@@ -1,45 +1,60 @@
 "use client";
 import * as React from 'react';
 import { useState } from 'react';
-import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, IconButton, Typography, Chip, Stack, Tooltip } from '@mui/material';
+import { useQuery } from "@tanstack/react-query";
+import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, IconButton, Typography, Chip, Stack, Tooltip, CircularProgress } from '@mui/material';
 import { Edit, Inventory, LocalShipping } from '@mui/icons-material';
 import Dialog from './editStorage';
 import AlertDialog from '../components/alertDialog';
 import { SnackbarProvider, enqueueSnackbar } from 'notistack';
+import axios from 'axios';
 
-function createData(
+interface storage {
   id: string,
   local: string,
   usage: number,
   status: string | null,
-) {
-  return { id, local, usage, status };
 }
 
-// Mockando os dados
-const initialRows = [
-  createData('1', 'Al. Vicente Pinzon, 54, 3º andar 04547-130 - São Paulo/SP', 0, 'Vazio'),
-  createData('2', 'Av. Paulista, 2300 Andar Pilotis 01310-300 - São Paulo/SP', 0, 'Vazio'),
-  createData('3', 'R. Dr. Celestino, 122 - 611 24020-091 - Niterói/RJ', 0, 'Vazio'),
-  createData('4', 'Teresina/PI', 0, 'Vazio'),
-];
-
-export default function BasicTable() {
-  const [rows, setRows] = useState(initialRows);
+function useDialog(data: storage[], handleRequest: (id: string)=> void) {
   const [open, setOpen] = useState(false);
-  const [openAlert, setOpenAlert] = useState(false);
-  const [confirmId, setConfirmId] = useState<string | null>(null); // Linha em que está sendo confirmada a coleta
-  const [editingRow, setEditingRow] = useState<typeof rows[0] | null>(null); // Linha que está sendo editada
+  const [editingRow, setEditingRow] = useState<storage | null>(null); // Linha que está sendo editada
 
-  const handleOpen = (row: typeof rows[0]) => {
+  const handleOpen = (row: storage) => {
     setEditingRow(row);
     setOpen(true);
   };
-
+  
   const handleClose = () => {
     setOpen(false);
     setEditingRow(null);
   };
+
+  // Função para lidar com a submissão do Dialog e atualizar as informações da linha
+  const handleDialogSubmit = (value: number) => {
+    if (editingRow) {
+      let status = null;
+      if (value >= 80) {
+        handleRequest(editingRow.id)
+      } else if (value > 0 && value < 80) {
+        status = 'Em uso';
+      } else if (value <= 0) {
+        status = 'Vazio';
+        value = 0;
+      }      
+      data.map((row: storage) =>
+        row.id === editingRow.id ? { ...row, usage: value, ...(value < 80 && { status: status }) } : row
+      )
+    }
+    handleClose();
+  };
+
+  return { open, editingRow, handleOpen, handleClose, handleDialogSubmit }
+}
+
+function useAlertDialog(data: storage[]) {
+  const [openAlert, setOpenAlert] = useState(false);
+  const [confirmId, setConfirmId] = useState<string | null>(null); // Linha em que está sendo confirmada a coleta
 
   const handleOpenAlert = (id: string) => {
     setConfirmId(id);
@@ -56,45 +71,36 @@ export default function BasicTable() {
     let status = 'Vazio', value = 0;
     enqueueSnackbar('Coleta aceita!', { variant: 'success' });
 
-    setRows((prevRows) =>
-      prevRows.map((row) =>
-        row.id === id ? { ...row, usage: value, status: status } : row
-      )
-    );
+    data.map((row: storage) =>
+      row.id === id ? { ...row, usage: value, status: status } : row
+    )
     handleCloseAlert();
   };
 
+  return { openAlert, confirmId, handleOpenAlert, handleCloseAlert, handleConfirm }
+}
+
+export default function BasicTable() {
+  const { data, isLoading, isError } = useQuery({
+    queryFn: async () => await axios.get('/api/storage'),
+    queryKey: ["rows"],
+  });
+
   const handleRequest = (id: string) => {
     let status = 'Aguardando coleta';
-    setRows((prevRows) =>
-      prevRows.map((row) =>
-        row.id === id ? { ...row, status: status } : row
-      )
-    );
+    data?.data.map((row: storage) =>
+      row.id === id ? { ...row, status: status } : row
+    )
     enqueueSnackbar('Pedido de coleta criado!', { variant: 'success' });
-  }
-
-  // Função para lidar com a submissão do Dialog e atualizar as informações da linha
-  const handleDialogSubmit = (value: number) => {
-    if (editingRow) {
-      let status = null;
-      if (value >= 80) {
-        handleRequest(editingRow.id)
-      } else if (value > 0 && value < 80) {
-        status = 'Em uso';
-      } else if (value <= 0) {
-        status = 'Vazio';
-        value = 0;
-      }      
-
-      setRows((prevRows) =>
-        prevRows.map((row) =>
-          row.id === editingRow.id ? { ...row, usage: value, ...(value < 80 && { status: status }) } : row
-        )
-      );
-    }
-    handleClose();
   };
+
+  const { open, editingRow, handleOpen, handleClose, handleDialogSubmit } = useDialog(data?.data, handleRequest)
+
+  const { openAlert, confirmId, handleOpenAlert, handleCloseAlert, handleConfirm } = useAlertDialog(data?.data)
+
+  if (isLoading) return (
+    <CircularProgress/>
+  )
 
   return (
     <React.Fragment>
@@ -115,7 +121,7 @@ export default function BasicTable() {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {rows.map((row) => (
+                {data?.data.map((row: storage) => (
                   <TableRow
                     key={row.id}
                     sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
